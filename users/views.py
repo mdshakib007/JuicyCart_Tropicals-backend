@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from users.serializers import SellerRegistrationSerializer, CustomerRegistrationSerializer, UserLoginSerializer
+from users.serializers import SellerRegistrationSerializer, CustomerRegistrationSerializer, UserLoginSerializer, UserSerializer
 from rest_framework import viewsets
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -12,6 +12,19 @@ from django.template.loader import render_to_string
 from users.models import Customer, Seller
 from django.contrib.auth import authenticate, login, logout
 from rest_framework.authtoken.models import Token
+from rest_framework import filters
+
+class SpecificUser(filters.BaseFilterBackend):
+    def filter_queryset(self, request, queryset, view):
+        uid = request.query_params.get('user_id')
+        if uid:
+            return queryset.filter(id=uid)
+        return queryset
+
+class UserViewSet(viewsets.ModelViewSet):
+    serializer_class = UserSerializer
+    queryset = User.objects.all()
+    filter_backends = [SpecificUser]
 
 class SellerRegistrationAPIView(APIView):
     serializer_class = SellerRegistrationSerializer

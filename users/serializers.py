@@ -3,6 +3,12 @@ from django.contrib.auth.models import User
 from users.models import Customer, Seller
 
 
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'first_name', 'last_name', 'email']
+        
+
 class SellerRegistrationSerializer(serializers.ModelSerializer):
     full_address = serializers.CharField(max_length=250)
     mobile_no = serializers.CharField(max_length=16)

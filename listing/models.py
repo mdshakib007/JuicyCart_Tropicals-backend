@@ -1,5 +1,6 @@
 from django.db import models
 from django.template.defaultfilters import slugify
+from shop.models import Shop
 
 class Category(models.Model):
     name = models.CharField(max_length=100, unique=True)
@@ -15,6 +16,7 @@ class Category(models.Model):
 
 
 class Mango(models.Model):
+    shop = models.ForeignKey(Shop, on_delete=models.CASCADE, related_name='shop')
     name = models.CharField(max_length=250)
     image = models.ImageField(upload_to='images/mangoes/')
     category = models.ForeignKey(Category, on_delete=models.CASCADE)

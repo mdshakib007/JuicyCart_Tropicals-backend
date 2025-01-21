@@ -13,6 +13,8 @@ from users.models import Customer, Seller
 from django.contrib.auth import authenticate, login, logout
 from rest_framework.authtoken.models import Token
 from rest_framework import filters
+from rest_framework.permissions import IsAuthenticated
+
 
 class SpecificUser(filters.BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
@@ -108,6 +110,8 @@ class UserLoginAPIView(APIView):
 
 
 class UserLogoutAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    
     def get(self, request):
         request.user.auth_token.delete()
         logout(request)

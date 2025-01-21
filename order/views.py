@@ -57,7 +57,7 @@ class PlaceOrderAPIView(views.APIView):
             )
         serializer = OrderSerializer(order)
 
-        return Response(serializer.data)
+        return Response({"success" : "Your order has been placed successfully!"})
 
 
 

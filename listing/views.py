@@ -35,10 +35,28 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         queryset = super().get_queryset()
+        
+        # Get filter parameters from the request
         product_id = self.request.query_params.get('product_id')
+        category_id = self.request.query_params.get('category_id')
+        name = self.request.query_params.get('name')
+        min_price = self.request.query_params.get('min_price')
+        max_price = self.request.query_params.get('max_price')
+
+        # Apply filters if parameters are provided
         if product_id:
             queryset = queryset.filter(id=product_id)
+        if category_id:
+            queryset = queryset.filter(category__id=category_id)
+        if name:
+            queryset = queryset.filter(name__icontains=name)  # Case-insensitive search
+        if min_price:
+            queryset = queryset.filter(price__gte=min_price)
+        if max_price:
+            queryset = queryset.filter(price__lte=max_price)
+
         return queryset
+
 
 
 class AddProductAPIView(views.APIView):
@@ -48,7 +66,7 @@ class AddProductAPIView(views.APIView):
     def post(self, request):
         user = request.user
 
-        if not hasattr(user, 'seller') or not user.seller.is_seller:
+        if not hasattr(user, 'seller'):
             raise PermissionDenied("You must be a verified seller to list a product.")
         
         try:

@@ -16,7 +16,7 @@ class SpecificShop(filters.BaseFilterBackend):
             queryset = Shop.objects.filter(id=shop_id)
         return queryset
 
-class ShopViewSet(viewsets.ModelViewSet):
+class ShopViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = ShopSerializer
     queryset = Shop.objects.all()
     filter_backends = [SpecificShop]

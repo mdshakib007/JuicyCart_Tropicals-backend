@@ -15,9 +15,10 @@ class Category(models.Model):
         return f"{self.name}"
 
 
-class Mango(models.Model):
+class Product(models.Model):
     shop = models.ForeignKey(Shop, on_delete=models.CASCADE, related_name='shop')
     name = models.CharField(max_length=250)
+    price = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     image = models.ImageField(upload_to='images/mangoes/')
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
     available = models.IntegerField(default=0)

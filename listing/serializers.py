@@ -1,14 +1,14 @@
 from rest_framework import serializers
-from listing.models import Category, Mango
+from listing.models import Category, Product
 
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
-        fields = ['id', 'name']
+        fields = '__all__'
 
 
-class MangoSerializer(serializers.ModelSerializer):
+class ProductSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Mango
+        model = Product
         fields = '__all__'

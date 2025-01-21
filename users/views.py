@@ -21,7 +21,7 @@ class SpecificUser(filters.BaseFilterBackend):
             return queryset.filter(id=uid)
         return queryset
 
-class UserViewSet(viewsets.ModelViewSet):
+class UserViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = UserSerializer
     queryset = User.objects.all()
     filter_backends = [SpecificUser]

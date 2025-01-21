@@ -14,9 +14,18 @@ from users.models import Customer, Seller
 class SpecificOrder(BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
         order_id = request.query_params.get('order_id')
+        shop_id = request.query_params.get('shop_id')
+        customer_id = request.query_params.get('customer_id')
+
         if order_id:
-            queryset = Order.objects.filter(id=order_id)
+            queryset = queryset.filter(id=order_id)
+        if shop_id:
+            queryset = queryset.filter(product__shop__id=shop_id)
+        if customer_id:
+            queryset = queryset.filter(customer=customer_id)
+        
         return queryset
+
 
 class OrderViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = OrderSerializer

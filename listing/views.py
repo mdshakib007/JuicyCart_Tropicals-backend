@@ -42,6 +42,7 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
         name = self.request.query_params.get('name')
         min_price = self.request.query_params.get('min_price')
         max_price = self.request.query_params.get('max_price')
+        shop_id = self.request.query_params.get('shop_id')
 
         # Apply filters if parameters are provided
         if product_id:
@@ -54,6 +55,8 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
             queryset = queryset.filter(price__gte=min_price)
         if max_price:
             queryset = queryset.filter(price__lte=max_price)
+        if shop_id:
+            queryset = queryset.filter(shop__id=shop_id)
 
         return queryset
 

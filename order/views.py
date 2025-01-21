@@ -80,7 +80,8 @@ class CancelOrderAPIView(views.APIView):
             raise ValidationError({"error": f"Cannot cancel the order with status '{order.status}'."})
 
         with transaction.atomic():
-            order.product.available += order.quantity  
+            order.product.available += order.quantity
+            order.product.sold -= order.quantity
             order.status = "Cancelled"
             order.product.save()
             order.save()

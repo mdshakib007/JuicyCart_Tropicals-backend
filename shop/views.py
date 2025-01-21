@@ -30,7 +30,7 @@ class CreateShopAPIView(views.APIView):
     def post(self, request):
         user = request.user
 
-        if not hasattr(user, 'seller') or not user.seller.is_seller:
+        if not hasattr(user, 'seller'):
             raise PermissionDenied("You must be a verified seller to create a shop.")
 
         if Shop.objects.filter(owner=user.seller).exists():

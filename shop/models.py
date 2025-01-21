@@ -9,7 +9,6 @@ class Shop(models.Model):
     description = models.TextField()
     location = models.CharField(max_length=250)
     hotline = models.CharField(max_length=20, null=True, blank=True, default=None)
-    total_sold = models.DecimalField(decimal_places=2, max_digits=12, default=0, null=True, blank=True)
     rank = models.IntegerField(default=0, unique=False)
 
     def __str__(self):

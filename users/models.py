@@ -8,7 +8,6 @@ class Seller(models.Model):
     # shop = models.OneToOneField()
     mobile_no = models.CharField(max_length=16)
     full_address = models.CharField(max_length=250)
-    is_seller = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.user.username}"

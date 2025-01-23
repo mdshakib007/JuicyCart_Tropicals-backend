@@ -27,10 +27,10 @@ class SellerRegistrationSerializer(serializers.ModelSerializer):
         full_address = self.validated_data['full_address']
 
         if len(password) < 8:
-            raise serializers.ValidationError({'password': 'Password must be at least 8 character.'})
+            raise serializers.ValidationError({'error': 'Password must be at least 8 character.'})
 
         if User.objects.filter(email=email).exists():
-            raise serializers.ValidationError({'email', "This Email Already Exists!"})
+            raise serializers.ValidationError({'error', "This Email Already Exists!"})
         
         account = User(username=username, first_name=first_name, last_name=last_name, email=email)
         account.set_password(password)
@@ -58,10 +58,10 @@ class CustomerRegistrationSerializer(serializers.ModelSerializer):
         full_address = self.validated_data['full_address']
 
         if len(password) < 8:
-            raise serializers.ValidationError({'password': 'Password must be at least 8 character.'})
+            raise serializers.ValidationError({'error': 'Password must be at least 8 character.'})
 
         if User.objects.filter(email=email).exists():
-            raise serializers.ValidationError({'email', "This Email Already Exists!"})
+            raise serializers.ValidationError({'error', "This Email Already Exists!"})
         
         account = User(username=username, first_name=first_name, last_name=last_name, email=email)
         account.set_password(password)

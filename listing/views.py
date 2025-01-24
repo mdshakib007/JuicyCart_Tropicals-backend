@@ -97,7 +97,7 @@ class DeleteProductAPIView(views.APIView):
         try:
             product = Product.objects.get(id=product_id)
         except Product.DoesNotExist:
-            raise ValidationError("Product not found.")
+            raise ValidationError({"error" : "Product not found."})
 
         shop = Shop.objects.filter(owner=user.seller).first()
         if not shop:
@@ -123,7 +123,7 @@ class EditProductAPIView(views.APIView):
         try:
             product = Product.objects.get(id=product_id)
         except Product.DoesNotExist:
-            raise ValidationError("Product not found.")
+            raise ValidationError({"error" : "Product not found."})
 
         shop = Shop.objects.filter(owner=user.seller).first()
         if not shop:

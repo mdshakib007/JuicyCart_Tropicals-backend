@@ -88,7 +88,7 @@ def activate(request, uid64, token):
         user.save()
         return render(request, "users/email_confirmed.html")
     else:
-        return Response({"error", "Something went wrong"})
+        return Response({"error": "Something went wrong"})
 
 
 class UserLoginAPIView(APIView):

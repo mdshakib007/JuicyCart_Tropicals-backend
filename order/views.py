@@ -9,6 +9,7 @@ from rest_framework.response import Response
 from listing.models import Product
 from django.db import transaction
 from users.models import Customer, Seller
+from django.contrib.auth.models import User
 
 
 class SpecificOrder(BaseFilterBackend):
@@ -34,13 +35,15 @@ class OrderViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class PlaceOrderAPIView(views.APIView):
-    permission_classes = [IsAuthenticated]
-
     def post(self, request):
-        user = request.user
-
         product_id = request.data.get('product_id')
-        quantity = request.data.get('quantity', 1)
+        quantity = request.data.get('quantity')
+        user_id = request.data.get('user_id')
+
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            raise ValidationError({"error" : "User not found."})
 
         if not Customer.objects.filter(user=user).exists():
             raise PermissionDenied("You do not have access to buy any product.")
@@ -71,11 +74,14 @@ class PlaceOrderAPIView(views.APIView):
 
 
 class CancelOrderAPIView(views.APIView):
-    permission_classes = [IsAuthenticated]
-
     def post(self, request):
-        user = request.user
+        user_id = request.data.get('user_id')
         order_id = int(request.data.get('order_id'))
+
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            raise ValidationError({"error" : "User not found."})
 
         if not Customer.objects.filter(user=user).exists():
             raise PermissionDenied("You are not authorized to cancel orders.")

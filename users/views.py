@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from users.serializers import SellerRegistrationSerializer, CustomerRegistrationSerializer, UserLoginSerializer, UserSerializer, SellerSerializer, CustomerSerializer
+from users.serializers import SellerRegistrationSerializer, CustomerRegistrationSerializer, UserLoginSerializer, UserSerializer, SellerSerializer, CustomerSerializer, UserLogoutSerializer
 from rest_framework import viewsets
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -129,7 +129,23 @@ class UserLoginAPIView(APIView):
 
 
 class UserLogoutAPIView(APIView):
-    def get(self, request):
-        request.user.auth_token.delete()
-        logout(request)
-        return Response({'success': 'Logout successful!'})
+    serializer_class = UserLogoutSerializer
+
+    def post(self, request):
+        serializer = self.serializer_class(data=self.request.data)
+        if serializer.is_valid():
+            token_key = serializer.validated_data['token']
+            user_id = serializer.validated_data['user_id']
+
+            try:
+                token = Token.objects.get(key=token_key)
+                if token.user.id == user_id:
+                    # Delete the token to log the user out
+                    token.delete()
+                    return Response({'success': 'Logout successful!'})
+                else:
+                    return Response({'error': 'Invalid token for the given user.'})
+            except Token.DoesNotExist:
+                return Response({'error': 'Token not found.'})
+
+        return Response(serializer.errors)

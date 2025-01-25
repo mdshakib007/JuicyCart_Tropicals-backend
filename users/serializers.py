@@ -87,3 +87,6 @@ class UserLoginSerializer(serializers.Serializer):
     username = serializers.CharField(required=True)
     password = serializers.CharField(required=True)
     
+class UserLogoutSerializer(serializers.Serializer):
+    token = serializers.CharField(required=True)
+    user_id = serializers.IntegerField(required=True)

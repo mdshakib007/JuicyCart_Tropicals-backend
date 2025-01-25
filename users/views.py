@@ -129,8 +129,6 @@ class UserLoginAPIView(APIView):
 
 
 class UserLogoutAPIView(APIView):
-    permission_classes = [IsAuthenticated]
-    
     def get(self, request):
         request.user.auth_token.delete()
         logout(request)

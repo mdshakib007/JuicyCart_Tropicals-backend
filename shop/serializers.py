@@ -5,4 +5,4 @@ from shop.models import Shop
 class ShopSerializer(serializers.ModelSerializer):
     class Meta:
         model = Shop
-        fields = ['owner', 'name', 'image', 'hotline', 'description', 'location']
+        fields = ['id', 'owner', 'name', 'image', 'hotline', 'description', 'location']

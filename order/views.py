@@ -102,3 +102,52 @@ class CancelOrderAPIView(views.APIView):
             order.save()
 
         return Response({"success": f"Order {order_id} has been successfully cancelled."})
+
+
+class ChangeOrderStatusAPIView(views.APIView):
+    def post(self, request):
+        user_id = request.data.get('user_id')
+        customer_id = request.data.get('customer_id')
+        order_id = request.data.get('order_id')
+        order_status = request.data.get('order_status')
+
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            raise ValidationError({"error" : "user not found."})
+        
+        try:
+            customer_user = User.objects.get(id=customer_id)
+        except User.DoesNotExist:
+            raise ValidationError({"error" : "does not exists"})
+        
+        if not Customer.objects.filter(user=customer_user).exists():
+            raise PermissionDenied("invalid customer id.")
+
+        if not Seller.objects.filter(user=user).exists():
+            raise PermissionDenied("seller does not exists.")
+
+        try:
+            order = Order.objects.get(id=order_id, customer=customer_user.customer)
+        except Order.DoesNotExist:
+            raise ValidationError({"error": "Order not found or does not belong to this customer."})
+
+        if order.status != "Pending":
+            raise ValidationError({"error": f"Cannot change the order with status '{order.status}'."})
+
+        if order_status == "Cancelled":
+            with transaction.atomic():
+                order.product.available += order.quantity
+                order.product.sold -= order.quantity
+                order.status = "Cancelled"
+                order.product.save()
+                order.save()
+
+            return Response({"success": f"Order {order_id} has been successfully cancelled."})
+        
+        else:
+            with transaction.atomic():
+                order.status = order_status
+                order.save()
+
+            return Response({"success" : "order status updated."})

@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from listing.models import Category, Product
-from listing.serializers import CategorySerializer, ProductSerializer
+from listing.serializers import CategorySerializer, ProductSerializer, AddProductSerializer
 from rest_framework import viewsets, views
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import PermissionDenied, ValidationError
@@ -8,6 +8,7 @@ from shop.models import Shop
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 from users.models import Seller, Customer
+from django.contrib.auth.models import User
 from shop.models import Shop
 
 
@@ -61,13 +62,12 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
         return queryset
 
 
-
 class AddProductAPIView(views.APIView):
-    serializer_class = ProductSerializer
-    permission_classes = [IsAuthenticated]
+    serializer_class = AddProductSerializer
 
     def post(self, request):
-        user = request.user
+        user_id = request.data.get('user_id')
+        user = User.objects.get(id=user_id)
 
         if not hasattr(user, 'seller'):
             raise PermissionDenied("You must be a verified seller to list a product.")
@@ -77,6 +77,8 @@ class AddProductAPIView(views.APIView):
         except Shop.DoesNotExist:
             raise PermissionDenied("You do not own a shop.")
         
+        request.data.pop('user_id', None)
+        
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             product = serializer.save(shop=shop)
@@ -85,11 +87,14 @@ class AddProductAPIView(views.APIView):
 
 
 class DeleteProductAPIView(views.APIView):
-    permission_classes = [IsAuthenticated]
-
     def post(self, request):
-        user = request.user
+        user_id = request.data.get('user_id')
         product_id = request.data.get('product_id')
+
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            raise ValidationError({"error": "user not found"})
 
         if not Seller.objects.filter(user=user).exists():
             raise PermissionDenied("You must be a verified seller to delete a product.")
@@ -111,11 +116,14 @@ class DeleteProductAPIView(views.APIView):
 
 
 class EditProductAPIView(views.APIView):
-    permission_classes = [IsAuthenticated]
-
     def post(self, request):
-        user = request.user
+        user_id = request.data.get('user_id')
         product_id = request.data.get('product_id')
+
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            raise ValidationError({"error": "user not found"})
 
         if not Seller.objects.filter(user=user).exists():
             raise PermissionDenied("You must be a verified seller to edit a product.")
@@ -132,6 +140,7 @@ class EditProductAPIView(views.APIView):
         if product.shop != shop:
             raise PermissionDenied("You can only edit products from your own shop.")
 
+        request.data.pop('user_id')
         # Update the product
         serializer = ProductSerializer(product, data=request.data, partial=True)
         if serializer.is_valid():

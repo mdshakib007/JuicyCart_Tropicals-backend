@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from rest_framework import views, viewsets
 from order.models import Order
 from order.serializers import OrderSerializer
@@ -10,6 +10,13 @@ from listing.models import Product
 from django.db import transaction
 from users.models import Customer, Seller
 from django.contrib.auth.models import User
+from sslcommerz_lib import SSLCOMMERZ
+import random 
+import string
+from django.views.decorators.csrf import csrf_exempt
+
+def unique_trax_id_generator(size=15, chars=string.ascii_uppercase + string.ascii_lowercase):
+    return "".join(random.choice(chars) for _ in range(size))
 
 
 class SpecificOrder(BaseFilterBackend):
@@ -56,21 +63,85 @@ class PlaceOrderAPIView(views.APIView):
         if product.available < int(quantity):
             raise ValidationError({"error": "Not enough stock available."})
 
-        with transaction.atomic(): 
-            product.available -= int(quantity)
-            product.sold += int(quantity)
-            product.save()
 
-            order = Order.objects.create(
-                product=product,
-                customer=user.customer,
-                quantity=quantity,
-                total_price=product.price * int(quantity),
-            )
-        serializer = OrderSerializer(order)
+        cancel_url = f"mdshakib007.github.io/JuicyCart_Tropicals-Frontend/single_product.html?product_id={product_id}"
 
-        return Response({"success" : "Your order has been placed successfully!"})
+        # sslcommerz
+        settings = { 'store_id': 'juicy67a80e7052c5e', 'store_pass': 'juicy67a80e7052c5e@ssl', 'issandbox': True }
+        sslcz = SSLCOMMERZ(settings)
+        post_body = {}
+        post_body['total_amount'] = product.price * int(quantity)
+        post_body['currency'] = "BDT"
+        post_body['tran_id'] = unique_trax_id_generator()
+        post_body['success_url'] = f"https://juicycart-tropicals.onrender.com/order/payment/{post_body['tran_id']}/success/"
+        post_body['fail_url'] = "https://juicycart-tropicals.onrender.com/order/failed/"
+        post_body['cancel_url'] = cancel_url
+        post_body['emi_option'] = 0
+        post_body['cus_name'] = user.username
+        post_body['cus_email'] = user.email
+        post_body['cus_phone'] = "01XXXXXXXXX"
+        post_body['cus_add1'] = user.customer.full_address
+        post_body['cus_city'] = "Dhaka"
+        post_body['cus_country'] = "Bangladesh"
+        post_body['shipping_method'] = "NO"
+        post_body['multi_card_name'] = ""
+        post_body['num_of_item'] = 1
+        post_body['product_name'] = product.name
+        post_body['product_category'] = product.category
+        post_body['product_profile'] = "general"
 
+
+        response = sslcz.createSession(post_body) # API response
+        print(response)
+        return redirect(response['GatewayPageURL'])
+
+
+@csrf_exempt
+def payment_success(request, trax_id):
+    product_id = request.POST.get('product_id')
+    quantity = request.POST.get('quantity')
+    user_id = request.POST.get('user_id')
+
+    if not (product_id and quantity and user_id):
+        return Response({"error": "Missing required parameters."})
+
+    try:
+        quantity = int(quantity)
+    except ValueError:
+        return Response({"error": "Quantity must be an integer."})
+
+    try:
+        product = Product.objects.get(id=product_id)
+    except Product.DoesNotExist:
+        return Response({"error": "Product not found."})
+
+    try:
+        user = User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        return Response({"error": "User not found."})
+
+    if not hasattr(user, 'customer'):
+        return Response({"error": "User is not associated with a customer."})
+
+    with transaction.atomic():
+        if product.available < quantity:
+            return Response({"error": "Insufficient stock available."})
+        product.available -= quantity
+        product.sold += quantity
+        product.save()
+
+        order = Order.objects.create(
+            product=product,
+            customer=user.customer,
+            quantity=quantity,
+            total_price=product.price * quantity,
+        )
+
+    serializer = OrderSerializer(order)
+    return Response({"success" : "Your order has been placed successfully!"})
+
+def order_failed(request):
+    return render(request, "order/order_failed.html")
 
 
 class CancelOrderAPIView(views.APIView):

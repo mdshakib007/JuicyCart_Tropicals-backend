@@ -95,17 +95,15 @@ class PlaceOrderAPIView(views.APIView):
 
         response = sslcz.createSession(post_body)  # API response
 
-        if 'GatewayPageURL' in response:
-            return redirect(response['GatewayPageURL'])  
-        else:
-            return HttpResponse("Payment gateway initialization failed.")
+        return Response({"gateway_url": response['GatewayPageURL']})
+
 
 
 @csrf_exempt
 def payment_success(request, trax_id):
-    product_id = request.POST.get('product_id')
-    quantity = request.POST.get('quantity')
-    user_id = request.POST.get('user_id')
+    product_id = request.GET.get('product_id')
+    quantity = request.GET.get('quantity')
+    user_id = request.GET.get('user_id')
 
     if not (product_id and quantity and user_id):
         return Response({"error": "Missing required parameters."})
@@ -146,7 +144,7 @@ def payment_success(request, trax_id):
     return Response({"success" : "Your order has been placed successfully!"})
 
 def order_failed(request):
-    return render(request, "order/order_failed.html")
+    return Response({"error": "Payment failed."})
 
 
 class CancelOrderAPIView(views.APIView):

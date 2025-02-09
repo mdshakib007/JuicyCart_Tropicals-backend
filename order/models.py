@@ -9,8 +9,8 @@ class Order(models.Model):
         ('Cancelled', 'Cancelled'),
     ]
 
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='ordered_product')
-    customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name='ordered_customer')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='orders')
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name='orders')
     quantity = models.PositiveIntegerField(default=1)
     total_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='Pending')

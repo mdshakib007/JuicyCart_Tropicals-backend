@@ -14,6 +14,8 @@ from sslcommerz_lib import SSLCOMMERZ
 import random 
 import string
 from django.views.decorators.csrf import csrf_exempt
+from django.http import HttpResponse
+
 
 def unique_trax_id_generator(size=15, chars=string.ascii_uppercase + string.ascii_lowercase):
     return "".join(random.choice(chars) for _ in range(size))
@@ -91,9 +93,12 @@ class PlaceOrderAPIView(views.APIView):
         post_body['product_profile'] = "general"
 
 
-        response = sslcz.createSession(post_body) # API response
-        print(response)
-        return redirect(response['GatewayPageURL'])
+        response = sslcz.createSession(post_body)  # API response
+
+        if 'GatewayPageURL' in response:
+            return redirect(response['GatewayPageURL'])  
+        else:
+            return HttpResponse("Payment gateway initialization failed.")
 
 
 @csrf_exempt

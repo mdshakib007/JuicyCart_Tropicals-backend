@@ -10,6 +10,7 @@ from rest_framework.pagination import PageNumberPagination
 from users.models import Seller, Customer
 from django.contrib.auth.models import User
 from shop.models import Shop
+from rest_framework.authentication import TokenAuthentication
 
 
 class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
@@ -151,17 +152,27 @@ class EditProductAPIView(views.APIView):
 
 class ReviewListCreateView(generics.ListCreateAPIView):
     serializer_class = ReviewSerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]
 
     def get_queryset(self):
         prod_id = self.kwargs.get('prod_id')
         return Review.objects.filter(product_id=prod_id)
 
     def perform_create(self, serializer):
+        user_id = self.request.data.get('user_id')
+        
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            raise ValidationError({"error": "User not found"})
+
+        if not Customer.objects.filter(user=user).exists():
+            raise ValidationError({"error": "You must be a customer to review a product."})
+
         try:
             product = Product.objects.get(id=self.kwargs['prod_id'])
         except Product.DoesNotExist:
-            raise ValidationError({"error" : "Product does not exists"})
+            raise ValidationError({"error": "Product does not exist"})
 
-        serializer.save(user=self.request.user.customer, product=product)
-        return Response({"success" : "Review Added."})
+        serializer.save(user=user.customer, product=product)
+        return Response({"success" : "Review Added!"})
+

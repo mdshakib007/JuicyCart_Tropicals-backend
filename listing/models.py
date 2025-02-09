@@ -1,6 +1,7 @@
 from django.db import models
 from django.template.defaultfilters import slugify
 from shop.models import Shop
+from users.models import Customer
 
 class Category(models.Model):
     name = models.CharField(max_length=100, unique=True)
@@ -28,3 +29,12 @@ class Product(models.Model):
     def __str__(self):
         return f"{self.name}"
 
+
+class Review(models.Model):
+    user = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name="reviews")
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="reviews")
+    content = models.TextField()
+    created_at = models.DateField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Review by {self.user.user.username} on {self.product.name}"

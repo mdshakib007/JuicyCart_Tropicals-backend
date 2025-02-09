@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from listing.models import Category, Product
+from listing.models import Category, Product, Review
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -17,3 +17,9 @@ class AddProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = ['name', 'price', 'image', 'category', 'available', 'about']
+
+class ReviewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Review
+        fields = ['id', 'user', 'product', 'content', 'created_at']
+        read_only_fields = ['id', 'user', 'product', 'created_at']

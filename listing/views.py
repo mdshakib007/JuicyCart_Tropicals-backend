@@ -1,8 +1,8 @@
 from django.shortcuts import render
-from listing.models import Category, Product
-from listing.serializers import CategorySerializer, ProductSerializer, AddProductSerializer
-from rest_framework import viewsets, views
-from rest_framework.permissions import IsAuthenticated
+from listing.models import Category, Product, Review
+from listing.serializers import CategorySerializer, ProductSerializer, AddProductSerializer, ReviewSerializer
+from rest_framework import viewsets, views, generics
+from rest_framework.permissions import IsAuthenticated, AllowAny, IsAuthenticatedOrReadOnly
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from shop.models import Shop
 from rest_framework.response import Response
@@ -147,3 +147,21 @@ class EditProductAPIView(views.APIView):
             serializer.save()
             return Response({"success": "Product updated successfully.", "product": serializer.data})
         return Response(serializer.errors, status=400)
+
+
+class ReviewListCreateView(generics.ListCreateAPIView):
+    serializer_class = ReviewSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def get_queryset(self):
+        prod_id = self.kwargs.get('prod_id')
+        return Review.objects.filter(product_id=prod_id)
+
+    def perform_create(self, serializer):
+        try:
+            product = Product.objects.get(id=self.kwargs['prod_id'])
+        except Product.DoesNotExist:
+            raise ValidationError({"error" : "Product does not exists"})
+
+        serializer.save(user=self.request.user.customer, product=product)
+        return Response({"success" : "Review Added."})

@@ -58,9 +58,9 @@ class PaymentViewSet(viewsets.ViewSet):
         # Generate unique transaction ID
         tran_id = str(uuid.uuid4())[:10].replace('-', '').upper()
 
-        product_id = request.data.get('product_id')
+        product_id = request.query_params.get('product_id')
+        quantity = int(request.query_params.get('quantity', 1)) 
         user_id = request.data.get('user_id')
-        quantity = request.data.get('quantity')
 
         try:
             product = Product.objects.get(id=product_id)
@@ -94,7 +94,6 @@ class PaymentViewSet(viewsets.ViewSet):
         
         # Define callback URLs
         success_url = request.build_absolute_uri(f'/payment/success/?tran_id={tran_id}&user_id={user_id}&name={name}&email={email}&phone_no={phone_no}&address_line_1={address_line_1}&address_line_2={address_line_2}&city={city}&country={country}&postal_code={postal_code}&status={status}&payment_type={payment_type}&state={state}')
-        fail_url = request.build_absolute_uri(f'/payment/cancle/')
         fail_url = request.build_absolute_uri('/payment/fail/')
         cancel_url = request.build_absolute_uri('/payment/cancel/')
 

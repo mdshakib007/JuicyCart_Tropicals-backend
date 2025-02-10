@@ -58,9 +58,9 @@ class PaymentViewSet(viewsets.ViewSet):
         # Generate unique transaction ID
         tran_id = str(uuid.uuid4())[:10].replace('-', '').upper()
 
-        product_id = request.query_params.get('product_id')
-        quantity = int(request.query_params.get('quantity', 1)) 
-        user_id = request.data.get('user_id')
+        product_id = int(request.data.get('product_id', 1))
+        quantity = int(request.data.get('quantity', 1)) 
+        user_id = int(request.data.get('user_id', 3))
 
         try:
             product = Product.objects.get(id=product_id)
@@ -93,9 +93,9 @@ class PaymentViewSet(viewsets.ViewSet):
         state = request.data.get('state', "state")
         
         # Define callback URLs
-        success_url = request.build_absolute_uri(f'/payment/success/?tran_id={tran_id}&user_id={user_id}&name={name}&email={email}&phone_no={phone_no}&address_line_1={address_line_1}&address_line_2={address_line_2}&city={city}&country={country}&postal_code={postal_code}&status={status}&payment_type={payment_type}&state={state}')
-        fail_url = request.build_absolute_uri('/payment/fail/')
-        cancel_url = request.build_absolute_uri('/payment/cancel/')
+        success_url = request.build_absolute_uri(f'payment/success/?user_id={user_id}&quantity={quantity}&product_id={product_id}')
+        fail_url = request.build_absolute_uri('payment/fail/')
+        cancel_url = request.build_absolute_uri('payment/cancel/')
 
         # Create payment information payload
         post_body = {
@@ -120,7 +120,7 @@ class PaymentViewSet(viewsets.ViewSet):
             'product_profile': "general"
         }
 
-        try:            
+        try:
             response = sslcz.createSession(post_body)
             if response.get('status') == 'SUCCESS' and 'GatewayPageURL' in response:
                 return Response({"url": response['GatewayPageURL']})
@@ -131,38 +131,19 @@ class PaymentViewSet(viewsets.ViewSet):
         except Exception:
             return Response({"error": "Internal Server Error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    @action(detail=False, methods=['post'])
+    @action(detail=False, methods=['get'])
     def success(self, request):
-        try:
-            # Extract parameters
-            user_id = request.query_params.get('user_id')
-            tran_id = request.query_params.get('tran_id')
-            name = request.query_params.get('name')
-            email = request.query_params.get('email')
-            phone_no = request.query_params.get('phone_no')
-            address_line_1 = request.query_params.get('address_line_1')
-            address_line_2 = request.query_params.get('address_line_2')
-            city = request.query_params.get('city')
-            country = request.query_params.get('country')
-            postal_code = request.query_params.get('postal_code')
-            payment_type = request.query_params.get('payment_type')
-            state = request.query_params.get('state')
+        user_id = request.query_params.get('user_id')
+        product_id = request.query_params.get('product_id')
+        quantity = request.query_params.get('quantity')
 
-            return redirect(settings.SUCCESS_URL)
-
-        except User.DoesNotExist:
-            return Response({"error": "User does not exist"}, status=status.HTTP_404_NOT_FOUND)
-        except Exception:
-            return Response({"error": "Internal Server Error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-            
         try:
             user = User.objects.get(id=user_id)
         except User.DoesNotExist:
             raise ValidationError({"error" : "User not found."})
 
         if not Customer.objects.filter(user=user).exists():
-            raise PermissionDenied("You do not have access to buy any product.")
+            raise ValidationError({"error" : "You do not have access to buy any product."})
 
         try:
             product = Product.objects.get(id=product_id)
@@ -185,12 +166,13 @@ class PaymentViewSet(viewsets.ViewSet):
             )
         serializer = OrderSerializer(order)
 
+        return redirect(settings.SUCCESS_URL)
 
-    @action(detail=False, methods=['post'])
+    @action(detail=False, methods=['get'])
     def cancel(self, request):
         return redirect(settings.CANCEL_URL)
     
-    @action(detail=False, methods=['post'])
+    @action(detail=False, methods=['get'])
     def fail(self, request):
         return redirect(settings.FAIL_URL)
 

@@ -44,9 +44,6 @@ class OrderViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class PaymentViewSet(viewsets.ViewSet):
-    permission_classes = [IsAuthenticated]
-    authentication_classes = [TokenAuthentication]
-
     @action(detail=False, methods=['post'])
     def create_payment(self, request):
         # SSLCommerz configuration
@@ -59,15 +56,34 @@ class PaymentViewSet(viewsets.ViewSet):
         
         # Generate unique transaction ID
         tran_id = str(uuid.uuid4())[:10].replace('-', '').upper()
+
+        product_id = request.data.get('product_id')
+        user_id = request.data.get('user_id')
+        quantity = request.data.get('quantity')
+
+        try:
+            product = Product.objects.get(id=product_id)
+        except Product.DoesNotExist:
+            return Response({"error" : "Product does not found"})
+        
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return Response({"error" : "user not found"})
+
+        try:
+            customer = Customer.objects.get(user = user)
+        except Customer.DoesNotExist:
+            return Response({"error" : "Customer does not exist"})
+
         
         # Extract and set default request data
-        user_id = request.data.get('user')
-        total_amount = request.data.get('total_amount', 0.26)
+        total_amount = product.price * quantity
         currency = request.data.get('currency', "BDT")
-        name = request.data.get('name', "name")
-        email = request.data.get('email', "test@test.com")
+        name = user.username
+        email = user.email
         phone_no = request.data.get('phone_no', "01700000000")
-        address_line_1 = request.data.get('address_line_1', "customer address")
+        address_line_1 = customer.full_address
         address_line_2 = request.data.get('address_line_2', "customer address")
         city = request.data.get('city', "Dhaka")
         country = request.data.get('country', "Bangladesh")
@@ -98,15 +114,13 @@ class PaymentViewSet(viewsets.ViewSet):
             'cus_country': country,
             'shipping_method': "NO",
             'multi_card_name': "",
-            'num_of_item': 1,
-            'product_name': "Test",
+            'num_of_item': quantity,
+            'product_name': product.name,
             'product_category': "Test Category",
             'product_profile': "general"
         }
 
-        try:
-            user=User.objects.get(id=user_id)
-            
+        try:            
             response = sslcz.createSession(post_body)
             if response.get('status') == 'SUCCESS' and 'GatewayPageURL' in response:
                 return Response({"url": response['GatewayPageURL']})

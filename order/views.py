@@ -93,7 +93,7 @@ class PaymentViewSet(viewsets.ViewSet):
         state = request.data.get('state', "state")
         
         # Define callback URLs
-        success_url = f"https://juicycart-tropicals.onrender.com/order/payment/success/?user_id={user_id}&quantity={quantity}&product_id={product_id}"
+        success_url = f"https://juicycart-tropicals.onrender.com/payment/success/?user_id={user_id}&quantity={quantity}&product_id={product_id}"
         fail_url = f"https://juicycart-tropicals.onrender.com/order/payment/fail/"
         cancel_url = f"https://juicycart-tropicals.onrender.com/order/payment/cancel/"
 
@@ -132,7 +132,7 @@ class PaymentViewSet(viewsets.ViewSet):
         except Exception:
             return Response({"error": "Internal Server Error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    @action(detail=False, methods=['get'])
+    @action(detail=False, methods=['post'])
     def success(self, request):
         user_id = request.query_params.get('user_id')
         product_id = request.query_params.get('product_id')
@@ -169,11 +169,11 @@ class PaymentViewSet(viewsets.ViewSet):
 
         return redirect(settings.SUCCESS_URL)
 
-    @action(detail=False, methods=['get'])
+    @action(detail=False, methods=['post'])
     def cancel(self, request):
         return redirect(settings.CANCEL_URL)
     
-    @action(detail=False, methods=['get'])
+    @action(detail=False, methods=['post'])
     def fail(self, request):
         return redirect(settings.FAIL_URL)
 
